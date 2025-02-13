@@ -6,25 +6,29 @@ app = Flask(__name__)
 
 @app.route('/emotionDetector', methods=['POST'])
 def detect_emotion():
-    text = request.form.get('text')  # Get text from the form
+    text = request.form.get('text')
     if not text:
-        return jsonify({"error": "No text provided"}), 400
+        return "Invalid text! Please try again!", 400  # Return error message directly
 
     result = emotion_detector(text)
-    if result is None:  # Handle cases when emotion_detector returns None (errors)
+
+    if result is None:
         return jsonify({"error": "Error processing text"}), 500
 
-    dominant_emotion = result.get('dominant_emotion', 'Unknown')
+    dominant_emotion = result.get('dominant_emotion')  # No default value here
+
+    if dominant_emotion is None: #Handle None dominant_emotion
+        return "Invalid text! Please try again!", 400
+
     output_string = f"For the given statement, the system response is "
 
     for emotion, score in result.items():
         if emotion != 'dominant_emotion':
             output_string += f"'{emotion}': {score}, "
-    
-    output_string = output_string[:-2] + f". The dominant emotion is {dominant_emotion}." #remove last comma and space, add dominant emotion
 
-    return output_string, 200 # Return the formatted string
+    output_string = output_string[:-2] + f". The dominant emotion is {dominant_emotion}."
 
+    return output_string, 200
 @app.route('/', methods=['GET']) # Serve index.html
 def index():
     return render_template('index.html')
